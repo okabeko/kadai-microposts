@@ -6,7 +6,15 @@ Rails.application.routes.draw do
   delete 'logout', to: 'sessions#destroy'
   
   get 'signup', to: 'users#new'
-  resources :users, only: [:index, :show, :new, :create]
+  resources :users, only: [:index, :show, :new, :create] do
+    # URLを深掘りするオプション
+    # URLを生成しているだけで機能はModelやControllerで実装する
+    member do
+      get :followings
+      get :followers
+    end
+  end
   
   resources :microposts, only: [:create, :destroy]
+  resources :relationships, only: [:create, :destroy]
 end

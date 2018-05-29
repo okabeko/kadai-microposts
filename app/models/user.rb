@@ -7,4 +7,31 @@ class User < ApplicationRecord
   has_secure_password
   
   has_many :microposts
+  
+  # relationships（中間テーブル）との一対多の関係
+  # user.relationshipとするとRelationshipを取得できる、が、あくまで中間テーブルのデータ
+  has_many :relationships
+  # followingsの命名によりreilationships経由で中間テーブルの先のモデルを参照する。
+  has_many :followings, through: :relationships, source: :follow
+  # follow_idを用いてRelationshipからUserを参照（逆方向はRailsの命名規則に従っていないためforeign_keyの設定が必要）
+  has_many :reverses_of_relationship, class_name: 'Relationship', foreign_key: 'follow_id'
+  has_many :followers, through: :reverses_of_relationship, source: :user
+  
+  def follow(other_user)
+    # フォロー対象が自分自身では無いかどうかのチェック
+    unless self == other_user
+      self.relationships.find_or_create_by(follow_id: other_user.id)
+    end
+  end
+  
+  def unfollow(other_user)
+    # すでにフォローしているかどうか
+    relationship = self.relationships.find_by(follow_id: other_user.id)
+    # relationshipが存在したらdestroy
+    relationship.destroy if relationship
+  end
+  
+  def following?(other_user)
+    self.followings.include?(other_user)
+  end
 end
